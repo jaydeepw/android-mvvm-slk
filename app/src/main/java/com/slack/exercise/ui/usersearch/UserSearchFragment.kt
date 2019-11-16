@@ -1,10 +1,8 @@
 package com.slack.exercise.ui.usersearch
 
 import android.os.Bundle
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.SearchView
-import android.support.v7.widget.Toolbar
+import android.support.v4.content.ContextCompat
+import android.support.v7.widget.*
 import android.view.*
 import com.slack.exercise.R
 import com.slack.exercise.model.UserSearchResult
@@ -12,6 +10,7 @@ import dagger.android.support.DaggerFragment
 import kotterknife.bindView
 import timber.log.Timber
 import javax.inject.Inject
+
 
 /**
  * Main fragment displaying and handling interactions with the view.
@@ -82,6 +81,14 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
 
     private fun setUpList() {
         with(userSearchResultList) {
+            val divider = DividerItemDecoration(
+                context,
+                DividerItemDecoration.VERTICAL
+            )
+            divider.setDrawable(
+                ContextCompat.getDrawable(context, R.drawable.item_divider)!!
+            )
+            addItemDecoration(divider)
             adapter = UserSearchAdapter()
             layoutManager = LinearLayoutManager(activity).apply {
                 orientation = LinearLayoutManager.VERTICAL

@@ -10,7 +10,6 @@ import com.bumptech.glide.Glide
 import com.slack.exercise.R
 import com.slack.exercise.model.UserSearchResult
 import kotlinx.android.synthetic.main.item_user_search.view.*
-import timber.log.Timber
 
 /**
  * Adapter for the list of [UserSearchResult].
@@ -34,11 +33,13 @@ class UserSearchAdapter : RecyclerView.Adapter<UserSearchAdapter.UserSearchViewH
     }
 
     override fun onBindViewHolder(holder: UserSearchViewHolder, position: Int) {
-        Timber.d("user: " + userSearchResults[position])
-        Timber.d("user: " + userSearchResults[position].display_name)
-        Timber.d("user: " + userSearchResults[position].id)
         showAvatar(holder, position)
+        showName(holder, position)
         showUsername(holder, position)
+    }
+
+    private fun showName(holder: UserSearchViewHolder, position: Int) {
+        holder.displayName.text = userSearchResults[position].display_name
     }
 
     private fun showAvatar(holder: UserSearchViewHolder, position: Int) {
@@ -46,10 +47,8 @@ class UserSearchAdapter : RecyclerView.Adapter<UserSearchAdapter.UserSearchViewH
         if (url.isBlank()) {
             holder.avatar.setImageDrawable(null)
         } else {
-
+            Glide.with(holder.itemView.context).load(url).into(holder.avatar)
         }
-        Timber.d("url:  %s", url)
-        Glide.with(holder.itemView.context).load(url).into(holder.avatar)
     }
 
     private fun showUsername(
@@ -60,6 +59,7 @@ class UserSearchAdapter : RecyclerView.Adapter<UserSearchAdapter.UserSearchViewH
     }
 
     class UserSearchViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val displayName: TextView = itemView.display_name
         val username: TextView = itemView.username
         val avatar: ImageView = itemView.avatar
     }

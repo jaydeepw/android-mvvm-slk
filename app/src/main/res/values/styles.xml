@@ -8,4 +8,16 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="NameStyle">
+        <item name="android:textColor">@color/name</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight">28sp</item>
+        <item name="android:lineSpacingExtra">12sp</item>
+    </style>
+
+    <style name="UsernameStyle" parent="NameStyle">
+        <item name="android:textColor">@color/username</item>
+    </style>
+
+
 </resources>

@@ -6,4 +6,6 @@
 
     <color name="background">#FFFFFF</color>
     <color name="divider">#DDDDDD</color>
+    <color name="name">#1D1C1D</color>
+    <color name="username">#616061</color>
 </resources>
