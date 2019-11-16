@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">SlackSearch</string>
+    <string name="app_name">Slack Challenge</string>
+    <string name="search_users_hint">Search Users</string>
 </resources>
