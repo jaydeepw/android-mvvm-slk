@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Slack Challenge</string>
     <string name="search_users_hint">Search Users</string>
+    <string name="msg_no_results_search">Sorry, no results found!</string>
 </resources>

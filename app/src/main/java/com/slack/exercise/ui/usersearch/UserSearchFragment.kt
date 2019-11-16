@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.*
 import android.view.*
+import android.widget.TextView
 import com.slack.exercise.BlackListCopyService
 import com.slack.exercise.R
 import com.slack.exercise.model.UserSearchResult
@@ -24,6 +25,7 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
 
     private var searchView: SearchView? = null
     private val toolbar: Toolbar by bindView(R.id.toolbar)
+    private val emptyText: TextView by bindView(R.id.message_title)
     private val userSearchResultList: RecyclerView by bindView(R.id.user_search_result_list)
     private val blacklistSet = mutableSetOf<String>()
 
@@ -126,6 +128,8 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
             override fun onQueryTextChange(newText: String): Boolean {
                 if (!isBlacklisted(newText)) {
                     presenter.onQueryTextChange(newText)
+                } else {
+                    Timber.w("Not making an API call")
                 }
                 return true
             }
@@ -139,11 +143,21 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
     override fun onUserSearchResults(results: Set<UserSearchResult>) {
         val adapter = userSearchResultList.adapter as UserSearchAdapter
         val query = searchView?.query?.toString() ?: ""
-        if (results.isEmpty()
-            && !blacklistSet.contains(query)) {
+        if (results.isEmpty()) {
             // save queries that dont yield any result in the file
-            updateBlackList(query)
+
+            if (!blacklistSet.contains(query)) {
+                // dont save the query if it was already cached.
+                // this means while caching first time itself, it
+                // was saved in the storage.
+                updateBlackList(query)
+            }
+            userSearchResultList.visibility = View.GONE
+            emptyText.visibility = View.VISIBLE
+            emptyText.text = getString(R.string.msg_no_results_search)
         } else {
+            userSearchResultList.visibility = View.VISIBLE
+            emptyText.visibility = View.GONE
             adapter.setResults(results)
         }
     }
