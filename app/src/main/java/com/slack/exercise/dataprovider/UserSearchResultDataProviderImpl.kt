@@ -10,7 +10,8 @@ import javax.inject.Singleton
  * Implementation of [UserSearchResultDataProvider].
  */
 @Singleton
-class UserSearchResultDataProviderImpl @Inject constructor(private val slackApi: SlackApi) : UserSearchResultDataProvider {
+class UserSearchResultDataProviderImpl @Inject
+constructor(private val slackApi: SlackApi) : UserSearchResultDataProvider {
 
     /**
      * Returns a [Single] emitting a set of [UserSearchResult].
@@ -18,7 +19,8 @@ class UserSearchResultDataProviderImpl @Inject constructor(private val slackApi:
     override fun fetchUsers(searchTerm: String): Single<Set<UserSearchResult>> {
         return slackApi.searchUsers(searchTerm)
                 .map {
-                    it.map { user -> UserSearchResult(user.username) }.toSet()
+                    it.map { user -> UserSearchResult(user.username,
+                        user.id, user.avatarUrl, user.displayName) }.toSet()
                 }
     }
 }

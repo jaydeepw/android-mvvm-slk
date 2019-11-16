@@ -4,10 +4,13 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import com.bumptech.glide.Glide
 import com.slack.exercise.R
 import com.slack.exercise.model.UserSearchResult
 import kotlinx.android.synthetic.main.item_user_search.view.*
+import timber.log.Timber
 
 /**
  * Adapter for the list of [UserSearchResult].
@@ -21,7 +24,8 @@ class UserSearchAdapter : RecyclerView.Adapter<UserSearchAdapter.UserSearchViewH
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserSearchViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_user_search, parent, false)
+        val view =
+            LayoutInflater.from(parent.context).inflate(R.layout.item_user_search, parent, false)
         return UserSearchViewHolder(view)
     }
 
@@ -30,10 +34,33 @@ class UserSearchAdapter : RecyclerView.Adapter<UserSearchAdapter.UserSearchViewH
     }
 
     override fun onBindViewHolder(holder: UserSearchViewHolder, position: Int) {
+        Timber.d("user: " + userSearchResults[position])
+        Timber.d("user: " + userSearchResults[position].display_name)
+        Timber.d("user: " + userSearchResults[position].id)
+        showAvatar(holder, position)
+        showUsername(holder, position)
+    }
+
+    private fun showAvatar(holder: UserSearchViewHolder, position: Int) {
+        val url: String = userSearchResults[position].avatar_url ?: ""
+        if (url.isBlank()) {
+            holder.avatar.setImageDrawable(null)
+        } else {
+
+        }
+        Timber.d("url:  %s", url)
+        Glide.with(holder.itemView.context).load(url).into(holder.avatar)
+    }
+
+    private fun showUsername(
+        holder: UserSearchViewHolder,
+        position: Int
+    ) {
         holder.username.text = userSearchResults[position].username
     }
 
     class UserSearchViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val username: TextView = itemView.username
+        val avatar: ImageView = itemView.avatar
     }
 }
