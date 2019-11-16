@@ -7,9 +7,9 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.widget.*
 import android.view.*
 import android.widget.TextView
-import com.slack.exercise.BlackListCopyService
 import com.slack.exercise.R
 import com.slack.exercise.model.UserSearchResult
+import com.slack.exercise.services.BlackListCopyService
 import dagger.android.support.DaggerFragment
 import kotterknife.bindView
 import timber.log.Timber
@@ -126,10 +126,12 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
             }
 
             override fun onQueryTextChange(newText: String): Boolean {
-                if (!isBlacklisted(newText)) {
-                    presenter.onQueryTextChange(newText)
+                var queryVar = newText.trim()
+                if (!isBlacklisted(queryVar)) {
+                    presenter.onQueryTextChange(queryVar)
                 } else {
                     Timber.w("Not making an API call")
+                    showNoResults()
                 }
                 return true
             }
@@ -141,39 +143,53 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
     }
 
     override fun onUserSearchResults(results: Set<UserSearchResult>) {
-        val adapter = userSearchResultList.adapter as UserSearchAdapter
         val query = searchView?.query?.toString() ?: ""
         if (results.isEmpty()) {
             // save queries that dont yield any result in the file
 
-            if (!blacklistSet.contains(query)) {
+            if (!blacklistSet.contains(query.trim())) {
                 // dont save the query if it was already cached.
                 // this means while caching first time itself, it
                 // was saved in the storage.
                 updateBlackList(query)
             }
-            userSearchResultList.visibility = View.GONE
-            emptyText.visibility = View.VISIBLE
-            emptyText.text = getString(R.string.msg_no_results_search)
+            showNoResults()
         } else {
-            userSearchResultList.visibility = View.VISIBLE
-            emptyText.visibility = View.GONE
-            adapter.setResults(results)
+            showResults(results)
         }
     }
 
-    private fun updateBlackList(query: String) {
+    private fun showResults(
+        results: Set<UserSearchResult>
+    ) {
+        // hide previous messages
+        userSearchResultList.visibility = View.VISIBLE
+        emptyText.visibility = View.GONE
 
-        if (query.isBlank()) {
+        val adapter = userSearchResultList.adapter as UserSearchAdapter
+        adapter.setResults(results)
+    }
+
+    private fun showNoResults() {
+        userSearchResultList.visibility = View.GONE
+        emptyText.visibility = View.VISIBLE
+        emptyText.text = getString(R.string.msg_no_results_search)
+    }
+
+    private fun updateBlackList(query: String) {
+        var queryVar = query
+        queryVar = query.trim()
+
+        if (queryVar.isBlank()) {
             return
         }
 
-        blacklistSet.add(query)
+        blacklistSet.add(queryVar)
         CacheTask {
             val file = File(activity?.filesDir, BlackListCopyService.BLACKLIST_FILE_NAM)
             val inputStream = FileInputStream(file)
             var allText = inputStream.bufferedReader().use(BufferedReader::readText)
-            allText += query
+            allText += queryVar
             Timber.d("$allText")
             BlackListCopyService.updateBlackLisData(
                 activity?.filesDir!!,
@@ -184,6 +200,9 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
 
     override fun onUserSearchError(error: Throwable) {
         Timber.e(error, "Error searching users.")
+        userSearchResultList.visibility = View.GONE
+        emptyText.visibility = View.VISIBLE
+        emptyText.text = error.message
     }
 
     private fun setUpToolbar() {

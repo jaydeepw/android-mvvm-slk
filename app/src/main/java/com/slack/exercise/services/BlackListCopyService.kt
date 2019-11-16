@@ -1,7 +1,8 @@
-package com.slack.exercise
+package com.slack.exercise.services
 
 import android.app.IntentService
 import android.content.Intent
+import com.slack.exercise.R
 import com.slack.exercise.utils.Utils
 import timber.log.Timber
 import java.io.File
@@ -19,7 +20,9 @@ class BlackListCopyService : IntentService(BlackListCopyService::class.qualified
 
         fun updateBlackLisData(path: File, data: String?) {
             try {
-                val file = File(path, BLACKLIST_FILE_NAM)
+                val file = File(path,
+                    BLACKLIST_FILE_NAM
+                )
                 val outputStream = FileOutputStream(file);
                 outputStream.write(data?.toByteArray());
                 // save as the line break in the last
@@ -34,7 +37,9 @@ class BlackListCopyService : IntentService(BlackListCopyService::class.qualified
     }
 
     override fun onHandleIntent(intent: Intent?) {
-        val file = File(filesDir, BLACKLIST_FILE_NAM)
+        val file = File(filesDir,
+            BLACKLIST_FILE_NAM
+        )
         if (!file.exists()) {
             // for now we will only consider the presense of file
             // as a signal to update it from blacklist database.
@@ -43,7 +48,10 @@ class BlackListCopyService : IntentService(BlackListCopyService::class.qualified
             Timber.d("Blacklist file not found. Copying from raw resources")
             updateBlackLisData(
                 filesDir,
-                Utils.readRawTextFile(resources, R.raw.blacklist)
+                Utils.readRawTextFile(
+                    resources,
+                    R.raw.blacklist
+                )
             )
         } else {
             Timber.d("Blacklist found. Not copying from raw resources")

@@ -24,7 +24,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <service android:name=".BlackListCopyService" />
+        <service android:name=".services.BlackListCopyService" />
     </application>
 
 </manifest>
