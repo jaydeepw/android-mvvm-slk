@@ -9,6 +9,10 @@ import com.slack.exercise.model.UserSearchResult
 import dagger.android.support.DaggerFragment
 import kotterknife.bindView
 import timber.log.Timber
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 import javax.inject.Inject
 
 
@@ -62,15 +66,60 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
             }
 
             override fun onQueryTextChange(newText: String): Boolean {
-                presenter.onQueryTextChange(newText)
+                if (!isBlacklisted(newText)) {
+                    presenter.onQueryTextChange(newText)
+                }
                 return true
             }
         })
     }
 
+    fun isBlacklisted(query: String) : Boolean {
+        val inputStream: InputStream = resources.openRawResource(R.raw.blacklist)
+        val inputreader = InputStreamReader(inputStream)
+        val buffreader = BufferedReader(inputreader)
+        var line: String?
+        try {
+            while (buffreader.readLine().also { line = it } != null) {
+                if (line.equals(query, false)) {
+                    Timber.d("found a blacklisted item")
+                    return true
+                }
+            }
+        } catch (e: IOException) {
+            return false
+        }
+
+        Timber.d("blacklisted item NOT found")
+        return false
+    }
+
     override fun onUserSearchResults(results: Set<UserSearchResult>) {
         val adapter = userSearchResultList.adapter as UserSearchAdapter
-        adapter.setResults(results)
+        if (results.isEmpty()) {
+            // saveAsBlacklisted("")
+        } else {
+            adapter.setResults(results)
+        }
+    }
+
+    private fun saveAsBlacklisted(query: String) {
+        val file: InputStream = resources.openRawResource(R.raw.blacklist)
+        try {
+            // val txtFile = resources.getr
+        } catch (e: IOException) {
+        }
+
+        var text: String? = ""
+        val size = file.available()
+        val buffer = ByteArray(size)
+        file.read(buffer)
+        file.close()
+        text = String(buffer)
+        text += query
+        Timber.d(text)
+
+        // val fos: FileOutputStream = File.openFileOutput(resources.openRawResource(R.raw.myFile), MODE_PRIVATE)
     }
 
     override fun onUserSearchError(error: Throwable) {
