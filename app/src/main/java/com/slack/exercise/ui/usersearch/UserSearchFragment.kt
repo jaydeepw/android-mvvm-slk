@@ -1,18 +1,18 @@
 package com.slack.exercise.ui.usersearch
 
+import android.content.Intent
+import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.*
 import android.view.*
+import com.slack.exercise.BlackListCopyService
 import com.slack.exercise.R
 import com.slack.exercise.model.UserSearchResult
 import dagger.android.support.DaggerFragment
 import kotterknife.bindView
 import timber.log.Timber
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStream
-import java.io.InputStreamReader
+import java.io.*
 import javax.inject.Inject
 
 
@@ -21,8 +21,10 @@ import javax.inject.Inject
  * We use the MVP pattern and attach a Presenter that will be in charge of non view related operations.
  */
 class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
+
     private val toolbar: Toolbar by bindView(R.id.toolbar)
     private val userSearchResultList: RecyclerView by bindView(R.id.user_search_result_list)
+    private val blacklistSet = mutableSetOf<String>()
 
     @Inject
     internal lateinit var presenter: UserSearchPresenter
@@ -38,6 +40,58 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
         super.onViewCreated(view, savedInstanceState)
         setUpToolbar()
         setUpList()
+
+        CacheTask {
+            cacheBlackListDataInMemory()
+        }.execute("")
+
+        // copy standard blacklist data to internal storage.
+        // There is a catch here. Everytime the app updates with a new blacklist
+        // information, we should device an algorithm to copy all the data over again
+        // and unify the old and new blacklist data on the internal storage.
+        startBlackListCopyService()
+    }
+
+    /**
+     * Asynchronously, cache the data in the memory
+     */
+    open class CacheTask(val cacheFunction: () -> Unit) : AsyncTask<String, Void, Unit>() {
+        override fun doInBackground(vararg params: String?) {
+            cacheFunction()
+        }
+    }
+
+    /**
+     * Keep all the blacklist information in memory for faster access and also so that
+     * we dont have to query the files on the internal storage.
+     */
+    private fun cacheBlackListDataInMemory() {
+        val file = File(activity?.filesDir, BlackListCopyService.BLACKLIST_FILE_NAM)
+
+        try {
+            val inputStream = FileInputStream(file);
+            val inputreader = InputStreamReader(inputStream)
+            val buffreader = BufferedReader(inputreader)
+            var line: String?
+            while (buffreader.readLine().also { line = it } != null) {
+                if (line != null) {
+                    blacklistSet.add(line!!)
+                }
+            }
+        } catch (e: IOException) {
+            Timber.e("${e.message}")
+        } catch (e: FileNotFoundException) {
+            Timber.e("${e.message}")
+        } catch (e: Exception) {
+            Timber.e("${e.message}")
+        }
+
+        Timber.d("blacklistSet.size: ${blacklistSet.size}")
+    }
+
+    private fun startBlackListCopyService() {
+        val intent = Intent(activity, BlackListCopyService::class.java)
+        activity?.startService(intent)
     }
 
     override fun onStart() {
@@ -75,51 +129,16 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
     }
 
     fun isBlacklisted(query: String) : Boolean {
-        val inputStream: InputStream = resources.openRawResource(R.raw.blacklist)
-        val inputreader = InputStreamReader(inputStream)
-        val buffreader = BufferedReader(inputreader)
-        var line: String?
-        try {
-            while (buffreader.readLine().also { line = it } != null) {
-                if (line.equals(query, false)) {
-                    Timber.d("found a blacklisted item")
-                    return true
-                }
-            }
-        } catch (e: IOException) {
-            return false
-        }
-
-        Timber.d("blacklisted item NOT found")
-        return false
+        return blacklistSet.contains(query)
     }
 
     override fun onUserSearchResults(results: Set<UserSearchResult>) {
         val adapter = userSearchResultList.adapter as UserSearchAdapter
         if (results.isEmpty()) {
-            // saveAsBlacklisted("")
+            // todo: Save blacklisted data
         } else {
             adapter.setResults(results)
         }
-    }
-
-    private fun saveAsBlacklisted(query: String) {
-        val file: InputStream = resources.openRawResource(R.raw.blacklist)
-        try {
-            // val txtFile = resources.getr
-        } catch (e: IOException) {
-        }
-
-        var text: String? = ""
-        val size = file.available()
-        val buffer = ByteArray(size)
-        file.read(buffer)
-        file.close()
-        text = String(buffer)
-        text += query
-        Timber.d(text)
-
-        // val fos: FileOutputStream = File.openFileOutput(resources.openRawResource(R.raw.myFile), MODE_PRIVATE)
     }
 
     override fun onUserSearchError(error: Throwable) {
