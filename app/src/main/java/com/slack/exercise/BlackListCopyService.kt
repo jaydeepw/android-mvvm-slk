@@ -16,6 +16,21 @@ class BlackListCopyService : IntentService(BlackListCopyService::class.qualified
 
     companion object {
         const val BLACKLIST_FILE_NAM = "blacklisted.txt"
+
+        fun updateBlackLisData(path: File, data: String?) {
+            try {
+                val file = File(path, BLACKLIST_FILE_NAM)
+                val outputStream = FileOutputStream(file);
+                outputStream.write(data?.toByteArray());
+                // save as the line break in the last
+                outputStream.write(System.lineSeparator().toByteArray())
+                outputStream.flush()
+                outputStream.close()
+            } catch (e: IOException) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     override fun onHandleIntent(intent: Intent?) {
@@ -26,21 +41,12 @@ class BlackListCopyService : IntentService(BlackListCopyService::class.qualified
             // We can check the length as well before we start copying the blacklist
             // but possibility of someone erasing the file data is very low.
             Timber.d("Blacklist file not found. Copying from raw resources")
-            copyBlackLisData()
+            updateBlackLisData(
+                filesDir,
+                Utils.readRawTextFile(resources, R.raw.blacklist)
+            )
         } else {
             Timber.d("Blacklist found. Not copying from raw resources")
-        }
-    }
-
-    private fun copyBlackLisData() {
-        try {
-            val file = File(filesDir, BLACKLIST_FILE_NAM)
-            val outputStream = FileOutputStream(file);
-            outputStream.write(Utils.readRawTextFile(resources, R.raw.blacklist)?.toByteArray());
-            outputStream.flush()
-            outputStream.close()
-        } catch (e : IOException) {
-            e.printStackTrace();
         }
     }
 }

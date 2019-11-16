@@ -22,6 +22,7 @@ import javax.inject.Inject
  */
 class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
 
+    private var searchView: SearchView? = null
     private val toolbar: Toolbar by bindView(R.id.toolbar)
     private val userSearchResultList: RecyclerView by bindView(R.id.user_search_result_list)
     private val blacklistSet = mutableSetOf<String>()
@@ -29,7 +30,11 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
     @Inject
     internal lateinit var presenter: UserSearchPresenter
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         super.onCreateView(inflater, container, savedInstanceState)
         val view = inflater.inflate(R.layout.fragment_user_search, container, false)
         setHasOptionsMenu(true)
@@ -67,7 +72,6 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
      */
     private fun cacheBlackListDataInMemory() {
         val file = File(activity?.filesDir, BlackListCopyService.BLACKLIST_FILE_NAM)
-
         try {
             val inputStream = FileInputStream(file);
             val inputreader = InputStreamReader(inputStream)
@@ -109,12 +113,12 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_user_search, menu)
 
-        val searchView: SearchView = menu.findItem(R.id.search_menu_item).actionView as SearchView
-        searchView.queryHint = getString(R.string.search_users_hint)
+        searchView = menu.findItem(R.id.search_menu_item).actionView as SearchView
+        searchView?.queryHint = getString(R.string.search_users_hint)
         // following line will make the searchview spead wide completely along the Toolbar
         // https://stackoverflow.com/a/34050959/452487
-        searchView.maxWidth = Integer.MAX_VALUE;
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        searchView?.maxWidth = Integer.MAX_VALUE;
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 return true
             }
@@ -128,17 +132,40 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
         })
     }
 
-    fun isBlacklisted(query: String) : Boolean {
+    fun isBlacklisted(query: String): Boolean {
         return blacklistSet.contains(query)
     }
 
     override fun onUserSearchResults(results: Set<UserSearchResult>) {
         val adapter = userSearchResultList.adapter as UserSearchAdapter
-        if (results.isEmpty()) {
-            // todo: Save blacklisted data
+        val query = searchView?.query?.toString() ?: ""
+        if (results.isEmpty()
+            && !blacklistSet.contains(query)) {
+            // save queries that dont yield any result in the file
+            updateBlackList(query)
         } else {
             adapter.setResults(results)
         }
+    }
+
+    private fun updateBlackList(query: String) {
+
+        if (query.isBlank()) {
+            return
+        }
+
+        blacklistSet.add(query)
+        CacheTask {
+            val file = File(activity?.filesDir, BlackListCopyService.BLACKLIST_FILE_NAM)
+            val inputStream = FileInputStream(file)
+            var allText = inputStream.bufferedReader().use(BufferedReader::readText)
+            allText += query
+            Timber.d("$allText")
+            BlackListCopyService.updateBlackLisData(
+                activity?.filesDir!!,
+                allText
+            )
+        }.execute("")
     }
 
     override fun onUserSearchError(error: Throwable) {
