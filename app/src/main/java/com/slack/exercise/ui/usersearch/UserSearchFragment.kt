@@ -53,6 +53,9 @@ class UserSearchFragment : DaggerFragment(), UserSearchContract.View {
 
         val searchView: SearchView = menu.findItem(R.id.search_menu_item).actionView as SearchView
         searchView.queryHint = getString(R.string.search_users_hint)
+        // following line will make the searchview spead wide completely along the Toolbar
+        // https://stackoverflow.com/a/34050959/452487
+        searchView.maxWidth = Integer.MAX_VALUE;
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 return true
