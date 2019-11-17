@@ -20,3 +20,4 @@ cannot be handled by the client until some changes are made on the backend.
 
 # Libraries used
 - `Glide` for image loading and caching
+- Other libraries as they were included in the starter project
