@@ -6,7 +6,7 @@ Skeleton project for the coding exercise for Android candidates
 - if a search term is not found in the blacklist, there is an API call to lookup matches
 - if the API returns no results, the search term is added to the blacklist
 
-# Improvements
+# Improvement suggestions
 - MVP could be changed to use MVVM and android architecture components to make app more concise and maintainable
 - Progress indicator can be shown while the API call is in progress
 
